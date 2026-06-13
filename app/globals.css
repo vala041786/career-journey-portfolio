@@ -1,0 +1,357 @@
+@import 'tailwindcss';
+@config '../tailwind.config.ts';
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #090B12;
+  color: white;
+}
+
+/* Responsive journey scale — mobile compact, desktop expansive */
+:root {
+  --road-col: 5.25rem;
+  --stop-size: 3.25rem;
+  --stop-symbol: 1.35rem;
+  --journey-shell: 100%;
+  --milestone-min-h: 46vh;
+  --side-panel-max: 100%;
+  --traveler-size: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --road-col: 6.5rem;
+    --stop-size: 3.75rem;
+    --stop-symbol: 1.5rem;
+    --milestone-min-h: 50vh;
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --road-col: 8.5rem;
+    --stop-size: 4.25rem;
+    --stop-symbol: 1.75rem;
+    --journey-shell: 48rem;
+    --milestone-min-h: 52vh;
+    --side-panel-max: 22rem;
+    --traveler-size: 2.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --road-col: 10.5rem;
+    --stop-size: 5rem;
+    --stop-symbol: 2rem;
+    --journey-shell: 60rem;
+    --milestone-min-h: 56vh;
+    --side-panel-max: 26rem;
+    --traveler-size: 3.25rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --road-col: 12rem;
+    --stop-size: 5.75rem;
+    --stop-symbol: 2.35rem;
+    --journey-shell: 72rem;
+    --milestone-min-h: 58vh;
+    --side-panel-max: 30rem;
+    --traveler-size: 3.5rem;
+  }
+}
+
+.scroll-flow {
+  scroll-snap-type: y proximity;
+}
+
+@media (min-width: 768px) {
+  .journey-grid {
+    gap: 2rem;
+    padding-block: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .journey-grid {
+    gap: 2.5rem;
+    padding-block: 3rem;
+  }
+}
+
+.scroll-section {
+  min-height: clamp(5.5rem, var(--milestone-min-h), 60vh);
+  scroll-snap-align: center;
+  scroll-snap-stop: normal;
+}
+
+.journey-shell {
+  width: 100%;
+  max-width: var(--journey-shell);
+  margin-inline: auto;
+}
+
+.journey-grid {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) var(--road-col) minmax(0, 1fr);
+  gap: 0.75rem;
+  min-height: clamp(5.5rem, var(--milestone-min-h), 60vh);
+  padding-block: 2rem;
+}
+
+.road-column {
+  width: var(--road-col);
+  min-width: var(--road-col);
+  z-index: 0;
+}
+
+.journey-milestones {
+  position: relative;
+  z-index: 2;
+}
+
+.pathway-stop-size {
+  width: var(--stop-size);
+  height: var(--stop-size);
+  min-width: var(--stop-size);
+  min-height: var(--stop-size);
+}
+
+/* Browser zoom-out / compact viewport — fit more journey on screen */
+html[data-compact-view] {
+  --milestone-min-h: 18vh;
+  --stop-size: max(2.85rem, var(--stop-size));
+  --stop-symbol: max(1.25rem, var(--stop-symbol));
+  --road-col: max(5rem, var(--road-col));
+}
+
+html[data-compact-view] .journey-grid {
+  min-height: clamp(4rem, 18vh, 28vh);
+  padding-block: 1rem;
+  gap: 0.5rem;
+}
+
+html[data-compact-view] .road-overview {
+  opacity: 0.92;
+}
+
+html[data-compact-view] .journey-traveler {
+  opacity: 0.85;
+  transform: scale(0.85);
+}
+
+html[data-compact-view] .milestone-title {
+  font-size: clamp(1rem, 1.2vw + 0.65rem, 1.5rem);
+}
+
+html[data-compact-view] .scroll-section {
+  min-height: clamp(4rem, 18vh, 28vh);
+  scroll-snap-stop: normal;
+}
+
+.stop-symbol {
+  font-size: var(--stop-symbol);
+  line-height: 1;
+}
+
+.milestone-side-panel {
+  max-width: var(--side-panel-max);
+}
+
+.milestone-side-panel--left {
+  margin-right: auto;
+}
+
+.milestone-side-panel--right {
+  margin-left: auto;
+}
+
+@media (min-width: 768px) {
+  .milestone-side-panel--left {
+    padding-right: 1.5rem;
+  }
+
+  .milestone-side-panel--right {
+    padding-left: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .milestone-side-panel--left {
+    padding-right: 2rem;
+  }
+
+  .milestone-side-panel--right {
+    padding-left: 2rem;
+  }
+}
+
+.journey-stop-column {
+  overflow-x: clip;
+  overflow-y: visible;
+  isolation: isolate;
+}
+
+.milestone-title {
+  font-size: clamp(1.125rem, 1.5vw + 0.75rem, 1.875rem);
+  line-height: 1.3;
+}
+
+.traveler-size {
+  width: var(--traveler-size);
+  height: var(--traveler-size);
+}
+
+.journey-node {
+  position: relative;
+  z-index: 1;
+  scroll-snap-align: center;
+}
+
+.milestone-label-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.pathway-stop {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.roadway {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.55));
+}
+
+.roadway-preview {
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.45));
+}
+
+.roadway-preview::after {
+  content: '';
+  position: absolute;
+  inset: auto 12% -6px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.roadway-preview__image {
+  display: block;
+  border-radius: 0.5rem;
+}
+
+.gradient-orb {
+  background: radial-gradient(circle, rgba(139,92,246,0.35), transparent 65%);
+}
+
+.hero-name-glow {
+  filter: drop-shadow(0 0 28px rgba(34, 211, 238, 0.22));
+}
+
+.hero-name-shift {
+  background-image: linear-gradient(
+    90deg,
+    #a5f3fc,
+    #22d3ee,
+    #c4b5fd,
+    #f8fafc,
+    #22d3ee,
+    #67e8f9,
+    #a5f3fc
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-name-glow {
+    animation: hero-name-shimmer 6s ease-in-out infinite;
+  }
+
+  .hero-name-shift {
+    animation: hero-name-gradient 8s ease-in-out infinite;
+  }
+}
+
+@keyframes hero-name-shimmer {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 28px rgba(34, 211, 238, 0.22));
+  }
+  50% {
+    filter: drop-shadow(0 0 36px rgba(34, 211, 238, 0.38));
+  }
+}
+
+@keyframes hero-name-gradient {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.scroll-flow-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(139, 92, 246, 0.12), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 30%, rgba(34, 211, 238, 0.08), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 50% 90%, rgba(139, 92, 246, 0.06), transparent 60%);
+}
+
+.landing-map {
+  background-color: #0a1220;
+}
+
+.landing-map__earth-image {
+  background-image: url('/images/earth-map.png');
+  background-position: center;
+  background-size: cover;
+  opacity: 0.48;
+  filter: saturate(0.55) brightness(1.2) contrast(0.88);
+  transform: scale(1.02);
+}
+
+.landing-map__blend {
+  background:
+    linear-gradient(180deg, rgba(9, 11, 18, 0.42) 0%, rgba(9, 11, 18, 0.18) 42%, rgba(9, 11, 18, 0.48) 100%),
+    radial-gradient(ellipse 88% 78% at 50% 46%, rgba(125, 211, 252, 0.1) 0%, rgba(9, 11, 18, 0.45) 72%);
+}
+
+.landing-map__atmosphere {
+  box-shadow:
+    inset 0 0 100px rgba(9, 11, 18, 0.5),
+    inset 0 0 220px rgba(14, 116, 144, 0.12);
+}
+
+.landing-map__route {
+  opacity: 0.55;
+}
+
+.journey-detail-panel {
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.12),
+    0 24px 48px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .scroll-flow {
+    scroll-snap-type: none;
+  }
+}
