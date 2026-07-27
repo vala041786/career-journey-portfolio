@@ -52,7 +52,8 @@ export const milestones = [
     title: 'Agentic AI & Research-to-Reality Builder',
     symbol: '🤖',
     location: 'Independent Projects',
-    description: 'Building agentic AI systems, content automation agents, AI education products, and research-to-reality workflows that connect emerging AI with practical business use cases.',
-    tags: ['Agentic AI', 'GenAI', 'Product Strategy']
+    description: 'Building AI products spanning ad creative intelligence, accessible communication tools, Chibi education series, productivity dashboards, research summarizers, and an AI Product Studio that turns emerging AI into practical, everyday workflows.',
+    tags: ['AI Products', 'Education', 'Productivity']
+
   }
 ];
