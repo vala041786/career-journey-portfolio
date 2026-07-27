@@ -49,11 +49,10 @@ export const milestones = [
   },
   {
     year: 'Now',
-    title: 'Agentic AI & Research-to-Reality Builder',
+    title: 'AI Agency',
     symbol: '🤖',
     location: 'Independent Projects',
     description: 'Building AI products spanning ad creative intelligence, accessible communication tools, Chibi education series, productivity dashboards, research summarizers, and an AI Product Studio that turns emerging AI into practical, everyday workflows.',
     tags: ['AI Products', 'Education', 'Productivity']
-
   }
 ];
