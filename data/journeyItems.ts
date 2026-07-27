@@ -50,6 +50,7 @@ export const journeyItems: JourneyItem[] = [
     title: project.name,
     description: project.description,
     impact: project.impact,
+    tags: project.tags,
     group: 'projects' as const,
   })),
   ...earlyAchievements,

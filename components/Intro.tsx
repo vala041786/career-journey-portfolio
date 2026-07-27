@@ -13,15 +13,15 @@ export function Intro() {
       <LandingMap className="w-full max-w-6xl">
         <RecognitionScroller
           variant="legend"
-          className="pointer-events-auto absolute right-3 top-3 z-30 sm:right-5 sm:top-5 md:right-8 md:top-8"
+          className="pointer-events-auto absolute right-3 top-3 z-30 max-md:max-w-[calc(100%-1.5rem)] sm:right-5 sm:top-5 md:right-8 md:top-8 md:max-w-none"
         />
 
-        <div className="relative z-10 flex min-h-[min(88vh,52rem)] flex-col items-center justify-center px-5 py-12 sm:px-8 md:py-14">
+        <div className="relative z-10 flex min-h-[min(88vh,52rem)] flex-col items-center justify-center px-5 py-12 max-md:pt-40 sm:px-8 md:py-14">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] as const }}
-            className="flex w-full max-w-2xl flex-col items-center text-center"
+            className="flex w-full max-w-2xl flex-col items-center text-center max-md:mt-2 md:mt-0"
           >
             <HeroIdentity centered />
           </motion.div>
