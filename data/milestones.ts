@@ -49,7 +49,7 @@ export const milestones = [
   },
   {
     year: 'Now',
-    title: 'AI Agency',
+    title: 'AI Everywhere',
     symbol: '🤖',
     location: 'Independent Projects',
     description: 'Building AI products spanning ad creative intelligence, accessible communication tools, Chibi education series, productivity dashboards, research summarizers, and an AI Product Studio that turns emerging AI into practical, everyday workflows.',

@@ -152,15 +152,6 @@ const rawItems = [
     iconClass: 'border-violet-200/35 bg-violet-200/18',
     dotClass: 'bg-violet-200/80',
   },
-  {
-    label: 'Built Automated Content Engine AI with Chibi for Social Media Platforms',
-    symbol: '🤖',
-    colorClass: 'text-slate-50',
-    cardClass:
-      'border-slate-200/30 bg-gradient-to-br from-slate-300/18 via-cyan-300/10 to-slate-900/30 shadow-[0_16px_48px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.12)]',
-    iconClass: 'border-slate-200/35 bg-slate-200/18',
-    dotClass: 'bg-slate-200/80',
-  },
 ] as const;
 
 export const recognitionScrollItems: RecognitionScrollItem[] = [...rawItems];

@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, useTransform, type MotionValue } from 'framer-motion';
+import { motion, type MotionValue } from 'framer-motion';
 
 import {
   generateRoadPath,
@@ -22,8 +22,6 @@ const roadCap = { strokeLinecap: 'round' as const, strokeLinejoin: 'round' as co
 export function Roadway({ stopCount, pathLength, pathOpacity }: RoadwayProps) {
   const roadPath = generateRoadPath(stopCount);
   const viewHeight = getRoadViewHeight(stopCount);
-
-  const traveledOpacity = useTransform(pathOpacity, (o) => o);
 
   return (
     <svg
@@ -89,7 +87,7 @@ export function Roadway({ stopCount, pathLength, pathOpacity }: RoadwayProps) {
         fill="none"
         stroke="url(#road-shoulder)"
         strokeWidth={ROAD_SHOULDER_WIDTH}
-        style={{ pathLength, opacity: traveledOpacity }}
+        style={{ pathLength, opacity: pathOpacity }}
         {...roadCap}
       />
       <motion.path
@@ -97,7 +95,7 @@ export function Roadway({ stopCount, pathLength, pathOpacity }: RoadwayProps) {
         fill="none"
         stroke="#e8edf2"
         strokeWidth={ROAD_EDGE_WHITE_WIDTH}
-        style={{ pathLength, opacity: traveledOpacity }}
+        style={{ pathLength, opacity: pathOpacity }}
         {...roadCap}
       />
       <motion.path
@@ -106,7 +104,7 @@ export function Roadway({ stopCount, pathLength, pathOpacity }: RoadwayProps) {
         stroke="url(#road-asphalt)"
         strokeWidth={ROAD_ASPHALT_WIDTH}
         filter="url(#asphalt-grain)"
-        style={{ pathLength, opacity: traveledOpacity }}
+        style={{ pathLength, opacity: pathOpacity }}
         {...roadCap}
       />
       <motion.path
@@ -115,7 +113,7 @@ export function Roadway({ stopCount, pathLength, pathOpacity }: RoadwayProps) {
         stroke="#fbbf24"
         strokeWidth="3.5"
         strokeDasharray="14 16"
-        style={{ pathLength, opacity: traveledOpacity }}
+        style={{ pathLength, opacity: pathOpacity }}
         {...roadCap}
       />
     </svg>
