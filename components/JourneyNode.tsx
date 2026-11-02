@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { AnimatePresence, motion, useMotionValue, useTransform, type MotionValue, type Variants } from 'framer-motion';
 import type { JourneyItem } from '../data/journeyItems';
 import { useTravelerProximity, MIN_STOP_REVEAL_SCALE } from '../hooks/useTravelerProximityGlow';
-import { getDetailsSide } from '../lib/roadway';
+import { getDetailsSide, getStopXPercent } from '../lib/roadway';
 import { getJourneyTitleColor } from '../lib/journeyColors';
 
 type JourneyNodeProps = {
@@ -13,10 +13,25 @@ type JourneyNodeProps = {
   stopCount?: number;
   scrollProgress?: MotionValue<number>;
   compactView?: boolean;
+  overviewMode?: boolean;
   isActive: boolean;
   dimmed: boolean;
   onOpenDetails: () => void;
+  onPinSelect?: () => void;
 };
+
+function shortPinTitle(title: string): string {
+  const trimmed = title.trim();
+  if (trimmed.length <= 28) return trimmed;
+  const words = trimmed.split(/\s+/);
+  let out = '';
+  for (const word of words) {
+    const next = out ? `${out} ${word}` : word;
+    if (next.length > 26) break;
+    out = next;
+  }
+  return `${out || trimmed.slice(0, 24)}…`;
+}
 
 const panelVariants: Variants = {
   hidden: { opacity: 0, x: -20, height: 0 },
@@ -119,13 +134,18 @@ export function JourneyNode({
   stopCount,
   scrollProgress,
   compactView = false,
+  overviewMode = false,
   isActive,
   dimmed,
   onOpenDetails,
+  onPinSelect,
 }: JourneyNodeProps) {
   const detailsSide = getDetailsSide(index);
   const detailsOnRight = detailsSide === 'right';
+  const stopXPercent = getStopXPercent(index);
   const titleColor = getJourneyTitleColor(index);
+  const pinTitle = shortPinTitle(item.title);
+  const handlePinActivate = onPinSelect ?? onOpenDetails;
   const fallbackProgress = useMotionValue(0);
   const stopRef = useRef<HTMLDivElement>(null);
   const { glow: proximityGlow, reveal: proximityReveal } = useTravelerProximity(stopRef);
@@ -167,9 +187,75 @@ export function JourneyNode({
   const symbolOpacity = useTransform(revealProgress, (r) => (Number(r) < 0.22 ? 0 : (Number(r) - 0.22) / 0.78));
   const symbolScale = useTransform(revealProgress, (r) => 0.5 + Number(r) * 0.5);
 
+  const labelOpacity = useTransform(glowIntensity, (g) => Math.max(0.72, Number(g)));
+
+  if (overviewMode) {
+    return (
+      <article
+        data-journey-id={item.id}
+        data-journey-group={item.group}
+        className="journey-node journey-node--overview journey-grid relative"
+      >
+        <div className="col-start-1 relative z-20 flex items-center justify-end">
+          {!detailsOnRight && (
+            <button
+              type="button"
+              className={`journey-pin-label journey-pin-label--left ${titleColor.colorClass}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                handlePinActivate();
+              }}
+            >
+              <span className="journey-pin-label__title">{pinTitle}</span>
+              {item.meta ? <span className="journey-pin-label__meta">{item.meta}</span> : null}
+            </button>
+          )}
+        </div>
+
+        <div ref={stopRef} className="journey-stop-column col-start-2 relative z-10">
+          <div
+            className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${stopXPercent}%` }}
+          >
+            <button
+              type="button"
+              className={`journey-pin pathway-stop relative z-20 flex items-center justify-center rounded-full border-2 bg-[#0c1018] ${titleColor.borderClass}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                handlePinActivate();
+              }}
+              aria-label={`Travel to ${item.title}`}
+            >
+              <span aria-hidden className="stop-symbol text-base">
+                {item.symbol}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="col-start-3 relative z-20 flex items-center justify-start">
+          {detailsOnRight && (
+            <button
+              type="button"
+              className={`journey-pin-label journey-pin-label--right ${titleColor.colorClass}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                handlePinActivate();
+              }}
+            >
+              <span className="journey-pin-label__title">{pinTitle}</span>
+              {item.meta ? <span className="journey-pin-label__meta">{item.meta}</span> : null}
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  }
+
   return (
     <motion.article
-      layout
+      data-journey-id={item.id}
+      data-journey-group={item.group}
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       style={dimmed || !scrollProgress || compactView ? undefined : { opacity: travelOpacity }}
@@ -197,6 +283,7 @@ export function JourneyNode({
             align="left"
             titleColor={titleColor}
             glowIntensity={glowIntensity}
+            labelOpacity={labelOpacity}
             isActive={isActive}
             onOpenDetails={onOpenDetails}
             panelVariants={panelVariants}
@@ -205,59 +292,67 @@ export function JourneyNode({
         )}
       </div>
 
-      {/* Center — stop + glow rings clipped to road column */}
-      <div ref={stopRef} className="journey-stop-column col-start-2 relative z-10 flex justify-center">
-        <div className="relative flex items-center justify-center">
-          <motion.div
-            aria-hidden
-            style={{ opacity: glowIntensity, scale: ringScale }}
-            className="pointer-events-none absolute -inset-7 rounded-full border border-cyan-300/20 sm:-inset-8 md:-inset-8 lg:-inset-10 xl:-inset-11"
-          />
-          <motion.div
-            aria-hidden
-            style={{ opacity: midRingOpacity, scale: ringScale }}
-            className="pointer-events-none absolute -inset-5 rounded-full border-2 border-cyan-300/30 shadow-[0_0_40px_rgba(34,211,238,0.25)] sm:-inset-6 md:-inset-6 lg:-inset-8 xl:-inset-9"
-          />
-          <motion.div
-            aria-hidden
-            style={{ opacity: glowIntensity, scale: stopSizeScale }}
-            className="pointer-events-none absolute -inset-3 rounded-full bg-cyan-400/10 blur-md sm:-inset-4 md:-inset-4"
-          />
-
-          <motion.button
-            type="button"
-            onClick={onOpenDetails}
-            aria-expanded={isActive}
-            aria-label={`${item.title} — ${isActive ? 'close details' : 'view details'}`}
-            style={{
-              scale: isActive ? undefined : finalStopScale,
-              boxShadow: isActive
-                ? '0 0 0 4px rgba(34,211,238,0.2), 0 0 28px rgba(34,211,238,0.45)'
-                : stopShadow,
-            }}
-            whileTap={{ scale: 0.92 }}
-            animate={{
-              scale: isActive ? 1.12 : undefined,
-              borderColor: isActive ? 'rgba(34,211,238,0.85)' : 'rgba(255,255,255,0.18)',
-            }}
-            transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-            className={`pathway-stop pathway-stop-size relative flex shrink-0 items-center justify-center rounded-full border-2 bg-[#0c1018] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/60 ${
-              isActive ? 'bg-white/[0.09]' : 'hover:border-cyan-200/40'
-            }`}
-          >
-            <motion.span
+      {/* Center — stop follows zig-zag within the road column only */}
+      <div ref={stopRef} className="journey-stop-column col-start-2 relative z-10">
+        <div
+          className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2"
+          style={{ left: `${stopXPercent}%` }}
+        >
+          <div className="relative flex items-center justify-center">
+            <motion.div
               aria-hidden
-              style={{ opacity: glowIntensity }}
-              className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-cyan-300/25 via-transparent to-violet-400/15"
+              style={{ opacity: glowIntensity, scale: ringScale }}
+              className="pointer-events-none absolute -inset-4 rounded-full border border-cyan-300/20 sm:-inset-5 md:-inset-5 lg:-inset-6"
             />
-            <motion.span
+            <motion.div
               aria-hidden
-              style={{ opacity: symbolOpacity, scale: symbolScale }}
-              className="stop-symbol relative block origin-center"
+              style={{ opacity: midRingOpacity, scale: ringScale }}
+              className="pointer-events-none absolute -inset-2.5 rounded-full border-2 border-cyan-300/30 shadow-[0_0_28px_rgba(34,211,238,0.25)] sm:-inset-3.5 md:-inset-4 lg:-inset-5"
+            />
+            <motion.div
+              aria-hidden
+              style={{ opacity: glowIntensity, scale: stopSizeScale }}
+              className="pointer-events-none absolute -inset-1.5 rounded-full bg-cyan-400/10 blur-md sm:-inset-2 md:-inset-2.5"
+            />
+
+            <motion.button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onOpenDetails();
+              }}
+              aria-expanded={isActive}
+              aria-label={`${item.title} — ${isActive ? 'close details' : 'view details'}`}
+              style={{
+                scale: isActive ? undefined : finalStopScale,
+                boxShadow: isActive
+                  ? '0 0 0 4px rgba(34,211,238,0.2), 0 0 28px rgba(34,211,238,0.45)'
+                  : stopShadow,
+              }}
+              whileTap={{ scale: 0.92 }}
+              animate={{
+                scale: isActive ? 1.12 : undefined,
+                borderColor: isActive ? 'rgba(34,211,238,0.85)' : 'rgba(255,255,255,0.18)',
+              }}
+              transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+              className={`pathway-stop pathway-stop-size relative z-20 flex shrink-0 items-center justify-center rounded-full border-2 bg-[#0c1018] focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/60 ${
+                isActive ? 'bg-white/[0.09]' : 'hover:border-cyan-200/40'
+              }`}
             >
-              {item.symbol}
-            </motion.span>
-          </motion.button>
+              <motion.span
+                aria-hidden
+                style={{ opacity: glowIntensity }}
+                className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-cyan-300/25 via-transparent to-violet-400/15"
+              />
+              <motion.span
+                aria-hidden
+                style={{ opacity: symbolOpacity, scale: symbolScale }}
+                className="stop-symbol relative block origin-center"
+              >
+                {item.symbol}
+              </motion.span>
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -269,6 +364,7 @@ export function JourneyNode({
             align="right"
             titleColor={titleColor}
             glowIntensity={glowIntensity}
+            labelOpacity={labelOpacity}
             isActive={isActive}
             onOpenDetails={onOpenDetails}
             panelVariants={panelVariantsRight}
@@ -308,6 +404,7 @@ type MilestoneSideProps = {
   align: 'left' | 'right';
   titleColor: ReturnType<typeof getJourneyTitleColor>;
   glowIntensity: MotionValue<number>;
+  labelOpacity: MotionValue<number>;
   isActive: boolean;
   onOpenDetails: () => void;
   panelVariants: Variants;
@@ -319,6 +416,7 @@ function MilestoneSide({
   align,
   titleColor,
   glowIntensity,
+  labelOpacity,
   isActive,
   onOpenDetails,
   panelVariants,
@@ -328,7 +426,7 @@ function MilestoneSide({
 
   return (
     <div className={`hidden md:block ${alignClass} milestone-side-panel milestone-side-panel--${align}`}>
-      <motion.div style={{ opacity: glowIntensity }} className="milestone-label-glow rounded-2xl p-3">
+      <motion.div style={{ opacity: labelOpacity }} className="milestone-label-glow relative z-20 rounded-2xl p-3">
         <MilestoneTitle
           item={item}
           align={align}
@@ -391,9 +489,13 @@ function MilestoneTitle({ item, align, titleColor, glowIntensity, isActive, onOp
     >
       <motion.button
         type="button"
-        onClick={onOpenDetails}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenDetails();
+        }}
         aria-expanded={isActive}
-        className={`group w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/60 ${alignClass}`}
+        className={`group relative z-20 w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/60 ${alignClass}`}
       >
         <motion.h2
           style={{ textShadow: titleShadow }}
@@ -404,9 +506,9 @@ function MilestoneTitle({ item, align, titleColor, glowIntensity, isActive, onOp
           {item.title}
         </motion.h2>
         {item.meta && (
-          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-white/45">{item.meta}</p>
+          <p className="milestone-meta mt-1 uppercase text-white/45">{item.meta}</p>
         )}
-        <p className="mt-2 text-[0.6rem] uppercase tracking-[0.2em] text-white/30 transition group-hover:text-white/50">
+        <p className="milestone-cta-hint mt-1.5 uppercase text-white/30 transition group-hover:text-white/50">
           {isActive ? 'Click to close' : 'Click to see more'}
         </p>
       </motion.button>
@@ -465,17 +567,17 @@ function DetailCard({ item, align, titleColor, detailItemVariants, showMeta = fa
       initial="hidden"
       animate="visible"
       style={{ boxShadow: panelGlow }}
-      className={`journey-detail-panel mt-4 rounded-2xl border bg-[#0c1018]/95 p-5 text-center md:rounded-3xl md:p-6 lg:p-8 ${titleColor.borderClass}`}
+      className={`journey-detail-panel mt-3 rounded-2xl border bg-[#0c1018]/95 p-3.5 text-center md:rounded-2xl md:p-4 lg:p-5 ${titleColor.borderClass}`}
     >
       {showMetaLine && item.meta && (
-        <motion.p variants={detailItemVariants} className={`text-sm font-medium ${titleColor.colorClass}`}>
+        <motion.p variants={detailItemVariants} className={`text-xs font-medium ${titleColor.colorClass}`}>
           {item.meta}
         </motion.p>
       )}
       {showDescription && item.description && (
         <motion.p
           variants={detailItemVariants}
-          className={`mx-auto max-w-prose leading-7 text-white/90 lg:text-lg lg:leading-8 ${showMetaLine ? 'mt-3' : ''}`}
+          className={`mx-auto max-w-prose text-[0.8125rem] leading-6 text-white/90 md:text-sm md:leading-6 ${showMetaLine ? 'mt-2' : ''}`}
         >
           {item.description}
         </motion.p>
@@ -483,7 +585,7 @@ function DetailCard({ item, align, titleColor, detailItemVariants, showMeta = fa
       {item.impact && (
         <motion.p
           variants={detailItemVariants}
-          className={`mx-auto mt-4 max-w-prose rounded-2xl p-4 text-sm ${titleColor.impactBgClass} ${titleColor.impactTextClass}`}
+          className={`mx-auto mt-3 max-w-prose rounded-xl p-3 text-xs leading-5 md:text-[0.8125rem] ${titleColor.impactBgClass} ${titleColor.impactTextClass}`}
         >
           {item.impact}
         </motion.p>
@@ -491,12 +593,12 @@ function DetailCard({ item, align, titleColor, detailItemVariants, showMeta = fa
       {item.tags && item.tags.length > 0 && (
         <motion.div
           variants={detailItemVariants}
-          className="mt-4 flex flex-nowrap items-center justify-center gap-1.5 overflow-x-auto"
+          className="mt-3 flex flex-nowrap items-center justify-center gap-1 overflow-x-auto"
         >
           {item.tags.map((tag) => (
             <span
               key={tag}
-              className={`shrink-0 whitespace-nowrap rounded-full border px-2 py-0.5 text-[0.625rem] sm:text-[0.65rem] ${titleColor.borderClass} ${titleColor.colorClass}`}
+              className={`shrink-0 whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[0.55rem] sm:text-[0.6rem] ${titleColor.borderClass} ${titleColor.colorClass}`}
             >
               {tag}
             </span>

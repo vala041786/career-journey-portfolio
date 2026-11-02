@@ -4,28 +4,22 @@ export const ROAD_VIEW_WIDTH = 1000;
 export const ROAD_STEP_Y = 120;
 export const ROAD_START_Y = 60;
 
-/** Narrow corridor — road swings slightly around center. */
+/**
+ * Zig-zag corridor inside the road column.
+ * Kept well inside the viewBox so asphalt/shoulder strokes never spill into content panels.
+ */
 export const ROAD_CENTER_X = 500;
-export const ROAD_SWING_X = 32;
+export const ROAD_SWING_X = 168;
 export const ROAD_LEFT_X = ROAD_CENTER_X - ROAD_SWING_X;
 export const ROAD_RIGHT_X = ROAD_CENTER_X + ROAD_SWING_X;
 
-export const ROAD_SHOULDER_WIDTH = 72;
-export const ROAD_EDGE_WHITE_WIDTH = 58;
-export const ROAD_ASPHALT_WIDTH = 48;
-export const ROAD_GHOST_SHOULDER = 76;
-
-/** Layout width for the road column — keep in sync with JourneyNode grid. */
-export const ROAD_COLUMN_WIDTH = '7rem';
-export const ROAD_COLUMN_WIDTH_MD = '8.5rem';
-
-/** @deprecated use ROAD_ASPHALT_WIDTH */
-export const ROAD_STROKE_WIDTH = ROAD_ASPHALT_WIDTH;
-export const ROAD_EDGE_WIDTH = ROAD_EDGE_WHITE_WIDTH;
-export const ROAD_GHOST_WIDTH = ROAD_GHOST_SHOULDER;
+/** Stroke widths in viewBox units — sized so bends stay inside the road column. */
+export const ROAD_SHOULDER_WIDTH = 58;
+export const ROAD_EDGE_WHITE_WIDTH = 46;
+export const ROAD_ASPHALT_WIDTH = 38;
 
 /** Lower = gentler bends; higher = tighter curves through each stop. */
-export const ROAD_CURVE_TENSION = 5.5;
+export const ROAD_CURVE_TENSION = 4.6;
 
 export type RoadPoint = { x: number; y: number };
 
@@ -37,6 +31,28 @@ export function getStopY(index: number): number {
   return ROAD_START_Y + index * ROAD_STEP_Y;
 }
 
+/** Horizontal stop position as % of the road column (for DOM alignment with the SVG). */
+export function getStopXPercent(index: number): number {
+  return (getStopX(index) / ROAD_VIEW_WIDTH) * 100;
+}
+
+/** Interpolated X along the zig-zag for a 0–1 scroll progress. */
+export function getProgressX(progress: number, stopCount: number): number {
+  if (stopCount <= 1) return ROAD_CENTER_X;
+  const leg = Math.min(1, Math.max(0, progress)) * (stopCount - 1);
+  const i = Math.floor(leg);
+  const t = leg - i;
+  const x0 = getStopX(i);
+  const x1 = getStopX(Math.min(i + 1, stopCount - 1));
+  return x0 + (x1 - x0) * t;
+}
+
+/** Pixel offset from center for traveler, scaled to a typical road-column width. */
+export function getTravelerXOffset(progress: number, stopCount: number, columnWidthPx = 112): number {
+  const x = getProgressX(progress, stopCount);
+  return ((x - ROAD_CENTER_X) / ROAD_VIEW_WIDTH) * columnWidthPx;
+}
+
 export function getRoadStopPoints(stopCount: number): RoadPoint[] {
   return Array.from({ length: stopCount }, (_, index) => ({
     x: getStopX(index),
@@ -44,7 +60,7 @@ export function getRoadStopPoints(stopCount: number): RoadPoint[] {
   }));
 }
 
-/** Smooth curved path through all stops — rounded bends like a real road. */
+/** Smooth curved path through all stops — rounded zig-zag like a real road. */
 export function generateRoadPath(stopCount: number): string {
   const points = getRoadStopPoints(stopCount);
   if (points.length === 0) return '';
@@ -78,7 +94,7 @@ export function getRoadViewHeight(stopCount: number): number {
   return getStopY(stopCount - 1) + ROAD_STEP_Y;
 }
 
-/** Details sit on the outer side, away from the road bend. */
+/** Details sit on the outer side, away from the road bend — keeps panels clear of the path. */
 export function getDetailsSide(index: number): 'left' | 'right' {
   return index % 2 === 0 ? 'right' : 'left';
 }

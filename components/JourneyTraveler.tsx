@@ -1,20 +1,49 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion, useTransform, type MotionValue } from 'framer-motion';
 
+import { getTravelerXOffset } from '../lib/roadway';
 import { TravelerFigure } from './TravelerFigure';
 
 type JourneyTravelerProps = {
   scrollProgress: MotionValue<number>;
+  stopCount: number;
+  visible?: boolean;
 };
 
-export function JourneyTraveler({ scrollProgress }: JourneyTravelerProps) {
-  const opacity = useTransform(scrollProgress, [0, 0.04, 0.96, 1], [0, 1, 1, 0]);
+function measureRoadColumnWidthPx(): number {
+  if (typeof window === 'undefined') return 112;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue('--road-col').trim();
+  const probe = document.createElement('div');
+  probe.style.width = raw || '7rem';
+  probe.style.position = 'absolute';
+  probe.style.visibility = 'hidden';
+  document.body.appendChild(probe);
+  const width = probe.getBoundingClientRect().width || 112;
+  probe.remove();
+  return width;
+}
+
+export function JourneyTraveler({ scrollProgress, stopCount, visible = true }: JourneyTravelerProps) {
+  const [columnWidthPx, setColumnWidthPx] = useState(112);
+  const scrollOpacity = useTransform(scrollProgress, [0, 0.04, 0.96, 1], [0, 1, 1, 0]);
+  const opacity = useTransform(scrollOpacity, (value) => (visible ? value : 0));
   const scale = useTransform(scrollProgress, [0, 0.06], [0.85, 1]);
+  const x = useTransform(scrollProgress, (progress) =>
+    getTravelerXOffset(progress, stopCount, columnWidthPx),
+  );
+
+  useEffect(() => {
+    const update = () => setColumnWidthPx(measureRoadColumnWidthPx());
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   return (
     <motion.div
-      style={{ opacity, scale }}
+      style={{ opacity, scale, x }}
       className="journey-traveler pointer-events-none fixed left-1/2 top-[36vh] z-30 -translate-x-1/2 sm:top-[38vh] md:top-[40vh] lg:top-[42vh]"
       aria-hidden
     >
